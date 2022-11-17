@@ -138,25 +138,15 @@ int main(int argc, char **argv)
     }
 
   // Maximum delay, 5 seconds
-  ros::Subscriber sub_imu = n.subscribe("/zed2i/zed_node/imu/data", 200, &ImuGrabber::GrabImu, &imugb); 
-  ros::Subscriber sub_img_left = n.subscribe("/zed2i/zed_node/left/image_rect_color", 1, &ImageGrabber::GrabImageLeft,&igb);
-  ros::Subscriber sub_img_right = n.subscribe("/zed2i/zed_node/right/image_rect_color", 1, &ImageGrabber::GrabImageRight,&igb);
+  ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
+  ros::Subscriber sub_img_left = n.subscribe("/camera/left/image_raw", 100, &ImageGrabber::GrabImageLeft,&igb);
+  ros::Subscriber sub_img_right = n.subscribe("/camera/right/image_raw", 100, &ImageGrabber::GrabImageRight,&igb);
 
   cout<<"CHECKING ROS OUTPUT"<<endl;
 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
   ros::spin();
-
-  // Stop all threads
-  SLAM.Shutdown();
-
-  // Save camera trajectory
-  SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory_TUM_Format.txt");
-  SLAM.SaveTrajectoryTUM("FrameTrajectory_TUM_Format.txt");
-  SLAM.SaveTrajectoryKITTI("FrameTrajectory_KITTI_Format.txt");
-
-  ros::shutdown();
 
   return 0;
 }

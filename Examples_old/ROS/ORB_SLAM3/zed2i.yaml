@@ -1,0 +1,130 @@
+%YAML:1.0
+
+# If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
+System.LoadAtlasFromFile: "Lib_2_3"
+
+# The store file is created from the current session, if a file with the same name exists it is deleted
+System.SaveAtlasToFile: "Lib_2_3"
+
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters ZED2 camera: HD720 mode, grab rate 15 frames per second
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole"
+
+# Camera calibration and distortion parameters (OpenCV) 
+Camera.fx: 268.08868078
+Camera.fy: 266.25319722
+Camera.cx: 339.57968814
+Camera.cy: 175.06123593
+
+Camera.k1: 0.00048095
+Camera.k2: 0.01753925
+Camera.p1: -0.00231479
+Camera.p2: 0.00109877
+
+Camera.bFishEye: 0
+
+Camera.width: 640
+Camera.height: 360
+
+# Camera frames per second 
+Camera.fps: 15
+
+# stereo baseline times fx
+Camera.bf: 32.713860327
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Close/Far threshold. Baseline times.
+ThDepth: 35.0
+
+
+# Transformation from camera r to camera l
+
+Tlr: !!opencv-matrix
+  rows: 3
+  cols: 4
+  dt: f
+  data: [1.0, 0.0, 0.0, 0.12202423617291667214,
+         0.0, 1.0, 0.0, 0.0,
+         0.0, 0.0, 1.0, 0.0,
+         0.0, 0.0, 0.0, 1.0]
+
+
+# Transformation from camera 0 to body-frame (imu)
+
+Tbc: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [ 0.0051989,  -0.00475195,  0.99997519,  0.01782353,
+         -0.99998009, -0.00360067,  0.00518181,  0.02405353,
+         0.00357595, -0.99998223, -0.00477058,  0.00652621,
+          0.,          0.,          0.,          1.        ]
+
+
+
+
+# IMU noise
+# IMU.NoiseGyro: 10e-8  # 1.6968e-04 
+# IMU.NoiseAcc:  10e-8  # 2.0000e-3
+# IMU.GyroWalk:  10e-8 
+# IMU.AccWalk:   10e-8  # 3.0000e-3
+IMU.NoiseGyro: 0.007000000216066837 # 2.44e-4 #1e-3 # rad/s^0.5
+IMU.NoiseAcc: 0.0015999999595806003 # 1.47e-3 #1e-2 # m/s^1.5
+IMU.GyroWalk: 0.0019474000437185168 # rad/s^1.5
+IMU.AccWalk: 0.0002508999896235764 # m/s^2.5
+
+IMU.Frequency: 200
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 1200
+
+# ORB Extractor: Scale factor between levels in the scale pyramid 	
+ORBextractor.scaleFactor: 1.2
+
+# ORB Extractor: Number of levels in the scale pyramid	
+ORBextractor.nLevels: 8
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast			
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
