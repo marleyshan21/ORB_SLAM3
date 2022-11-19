@@ -319,6 +319,7 @@ void Atlas::PreSave()
     std::set<GeometricCamera*> spCams(mvpCameras.begin(), mvpCameras.end());
     for(Map* pMi : mvpBackupMaps)
     {
+        lock_guard<mutex> lock(pMi->mMutexMapUpdate);
         if(!pMi || pMi->IsBad())
             continue;
 

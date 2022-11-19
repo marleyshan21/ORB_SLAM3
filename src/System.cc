@@ -32,6 +32,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include "opencv2/core/eigen.hpp"
 
 namespace ORB_SLAM3
 {
@@ -116,6 +117,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
         mpVocabulary = new ORBVocabulary();
         bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+      //  bool bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
@@ -138,6 +140,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
         mpVocabulary = new ORBVocabulary();
         bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+        //bool bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
         if(!bVocLoad)
         {
             cerr << "Wrong path to vocabulary. " << endl;
@@ -241,7 +244,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
-Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
@@ -315,6 +318,29 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     // std::cout << "start GrabImageStereo" << std::endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
 
+    Eigen::Matrix4f test_eig = Tcw.matrix();
+    cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
+    if (!test_eig.isIdentity() && (mpAtlas->GetCurrentMap()->GetIniertialBA1() || mSensor == System::STEREO) )
+    {
+        IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
+        cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
+        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
+        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
+        tmp_cv_mat0.copyTo(tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
+        tmp_cv_mat = tmp_cv_mat.t();
+        tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
+
+        tmp_Data.at<float>(5, 0) = tmp_bias.bax;
+        tmp_Data.at<float>(5, 1) = tmp_bias.bay;
+        tmp_Data.at<float>(5, 2) = tmp_bias.baz;
+        tmp_Data.at<float>(6, 0) = tmp_bias.bwx;
+        tmp_Data.at<float>(6, 1) = tmp_bias.bwy;
+        tmp_Data.at<float>(6, 2) = tmp_bias.bwz;
+    }
+    else
+        tmp_Data.release();
+
     // std::cout << "out grabber" << std::endl;
 
     unique_lock<mutex> lock2(mMutexState);
@@ -322,10 +348,10 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 
-    return Tcw;
+    return tmp_Data.clone();
 }
 
-Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
@@ -389,20 +415,43 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 
     Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed,imDepthToFeed,timestamp,filename);
 
+    Eigen::Matrix4f test_eig = Tcw.matrix();
+    cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
+    if (!test_eig.isIdentity() && (mpAtlas->GetCurrentMap()->GetIniertialBA1() || mSensor == System::RGBD) )
+    {
+        IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
+        cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
+        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
+        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
+        tmp_cv_mat0.copyTo(tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
+        tmp_cv_mat = tmp_cv_mat.t();
+        tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
+
+        tmp_Data.at<float>(5, 0) = tmp_bias.bax;
+        tmp_Data.at<float>(5, 1) = tmp_bias.bay;
+        tmp_Data.at<float>(5, 2) = tmp_bias.baz;
+        tmp_Data.at<float>(6, 0) = tmp_bias.bwx;
+        tmp_Data.at<float>(6, 1) = tmp_bias.bwy;
+        tmp_Data.at<float>(6, 2) = tmp_bias.bwz;
+    }
+    else
+        tmp_Data.release();
+
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
-    return Tcw;
+    return tmp_Data.clone();
 }
 
-Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
 
     {
         unique_lock<mutex> lock(mMutexReset);
         if(mbShutDown)
-            return Sophus::SE3f();
+            return cv::Mat();
     }
 
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
@@ -465,12 +514,35 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
 
     Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed,timestamp,filename);
 
+    Eigen::Matrix4f test_eig = Tcw.matrix();
+    cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
+    if (!test_eig.isIdentity() && (mpAtlas->GetCurrentMap()->GetIniertialBA1() || mSensor == System::MONOCULAR))
+    {
+        IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
+        cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
+        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
+        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
+        tmp_cv_mat0.copyTo(tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
+        tmp_cv_mat = tmp_cv_mat.t();
+        tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
+
+        tmp_Data.at<float>(5, 0) = tmp_bias.bax;
+        tmp_Data.at<float>(5, 1) = tmp_bias.bay;
+        tmp_Data.at<float>(5, 2) = tmp_bias.baz;
+        tmp_Data.at<float>(6, 0) = tmp_bias.bwx;
+        tmp_Data.at<float>(6, 1) = tmp_bias.bwy;
+        tmp_Data.at<float>(6, 2) = tmp_bias.bwz;
+    }
+    else
+        tmp_Data.release();
+
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 
-    return Tcw;
+    return tmp_Data.clone();
 }
 
 
@@ -521,29 +593,60 @@ void System::Shutdown()
 
     cout << "Shutdown" << endl;
 
-    mpLocalMapper->RequestFinish();
-    mpLoopCloser->RequestFinish();
-    /*if(mpViewer)
+    while (mpLoopCloser->isRunningGBA())
     {
-        mpViewer->RequestFinish();
-        while(!mpViewer->isFinished())
-            usleep(5000);
-    }*/
+        if(mpLoopCloser->isRunningGBA())
+        {
+            cout << "mpLoopCloser is running GBA, wait~~~~" << endl;\
+            usleep(1000000);
+        }
+    }
 
+    if(mpViewer)
+    {
+        int wait_limit = 0;
+        while(!mpViewer->isFinished())
+        {
+            wait_limit++;
+            if (wait_limit > 10)
+                break;
+            mpViewer->RequestFinish();
+            usleep(1000000);
+            cout << "mpViewer is not finished" << endl;
+        }
+    }
+
+    int wait_limit = 0;
+    while( !mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() )
+    {
+        mpLocalMapper->RequestFinish();
+        mpLoopCloser->RequestFinish();
+        if(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished())
+        {
+            wait_limit++;
+            if (wait_limit > 10)
+                break;
+            usleep(1000000);
+            cout << "mpLocalMapper or mpLoopCloser is not finished" << endl;
+        }
+    }
     // Wait until all thread have effectively stopped
     /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     {
         if(!mpLocalMapper->isFinished())
-            cout << "mpLocalMapper is not finished" << endl;*/
-        /*if(!mpLoopCloser->isFinished())
+            cout << "mpLocalMapper is not finished" << endl;
+        if(!mpLoopCloser->isFinished())
             cout << "mpLoopCloser is not finished" << endl;
         if(mpLoopCloser->isRunningGBA()){
             cout << "mpLoopCloser is running GBA" << endl;
             cout << "break anyway..." << endl;
             break;
-        }*/
-        /*usleep(5000);
+        }
+        usleep(5000);
     }*/
+
+    std::cout << "just wait for 10 seconds" << std::endl;
+    usleep(10000000);
 
     if(!mStrSaveAtlasToFile.empty())
     {
