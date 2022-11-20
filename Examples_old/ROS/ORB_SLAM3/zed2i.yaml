@@ -1,11 +1,11 @@
 %YAML:1.0
 
 # If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
-System.LoadAtlasFromFile: "Lib_2_3"
+System.LoadAtlasFromFile: "5_2"
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
-System.SaveAtlasToFile: "Lib_2_3"
-
+# System.SaveAtlasToFile: "5_2"
+# 
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters ZED2 camera: HD720 mode, grab rate 15 frames per second
