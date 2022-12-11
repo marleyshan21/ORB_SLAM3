@@ -1,0 +1,8 @@
+roscore
+cd ~/catkin_ws/src/orb_slam3_files/rosbag$      
+rosbag play --pause 5_1.bag 
+
+rosrun ORB_SLAM3 Stereo_Inertial Vocabulary/ORBvoc.txt Examples_old/ROS/ORB_SLAM3/zed2i.yaml false
+rosrun ORB_SLAM3 Mono Vocabulary/ORBvoc.txt Examples_old/ROS/ORB_SLAM3/zed2i.yaml 
+rosrun ORB_SLAM3 Stereo Vocabulary/ORBvoc.txt Examples_old/ROS/ORB_SLAM3/zed2i.yaml false
+
