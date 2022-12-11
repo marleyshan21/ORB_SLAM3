@@ -1,0 +1,9 @@
+roslaunch depthai_examples stereo_node.launch
+
+#change the image_rect to rect in image_pipeline's stereo_image_proc
+ROS_NAMESPACE=/stereo_publisher/ rosrun stereo_image_proc stereo_image_proc
+
+rosrun ORB_SLAM3 Stereo Vocabulary/ORBvoc.txt Examples_old/ROS/ORB_SLAM3/oak_d.yaml false /zed2i/zed_node/left/image_rect_color:=/stereo_inertial_publisher/left/image_rect /zed2i/zed_node/right/image_rect_color:=/stereo_inertial_publisher/right/image_rect
+
+
+rosrun ORB_SLAM3 Stereo Vocabulary/ORBvoc.txt Examples_old/ROS/ORB_SLAM3/oak_d_rect.yaml true /zed2i/zed_node/left/image_rect_color:=/stereo_inertial_publisher/left/image /zed2i/zed_node/right/image_rect_color:=/stereo_inertial_publisher/right/image

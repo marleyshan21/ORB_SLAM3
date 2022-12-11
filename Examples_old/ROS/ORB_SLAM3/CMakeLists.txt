@@ -118,6 +118,15 @@ rosbuild_add_executable(Stereo_Inertial
 src/ros_stereo_inertial.cc
 )
 
+# Node for stereo-inertial camera - oak
+rosbuild_add_executable(Stereo_Inertial_OAK
+src/ros_stereo_inertial_oak.cc
+)
+target_link_libraries(Stereo_Inertial_OAK
+${LIBS}
+)
+
+
 target_link_libraries(Stereo_Inertial
 ${LIBS}
 )
